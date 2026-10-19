@@ -286,6 +286,7 @@ body{padding-top:30px}
     <h2>Thank you for paying your kas!</h2>
     <p id="doneTxt">Your payment is waiting for the treasurer to verify it. Once approved, you will show up in the recap.</p>
     <button class="btn" id="toRekap">View recap</button>
+    <button class="btn ghost" id="speakAgain">Play voice message again</button>
     <button class="btn ghost" data-go="cover">Back to start</button>
   </div>
 </section>
@@ -324,6 +325,7 @@ function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=c
 
 function show(id){
   if(!DATA)load();
+  if(id!=="done"&&"speechSynthesis" in window){speechSynthesis.cancel();if(typeof duck==="function")duck(false)}
   document.querySelectorAll(".view").forEach(function(v){v.classList.toggle("on",v.id===id)});
   window.scrollTo(0,0);
 }
@@ -436,6 +438,7 @@ $("#f").onsubmit=function(e){
   else if(!file) msg="Upload foto bukti pembayaran dulu.";
   $("#err").textContent=msg;if(msg)return;
   var btn=$("#send");btn.disabled=true;btn.textContent="Mengirim…";
+  if("speechSynthesis" in window){var uu=new SpeechSynthesisUtterance(" ");uu.volume=0;speechSynthesis.speak(uu)}
   compress(file).then(function(b64){
     return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
       body:JSON.stringify({nama:m.nama,months:mo,via:via.value,file:b64})}).then(function(r){return r.json()});
@@ -444,6 +447,8 @@ $("#f").onsubmit=function(e){
     $("#doneTxt").textContent="Thank you, "+m.nama.split(" ")[0]+"! Your payment of "+rp(j.total)+" for "+mo.map(function(i){return MONTHS[i]}).join(", ")+" has been received and is waiting for the treasurer to verify it.";
     $("#f").reset();$("#proof").onchange.call($("#proof"));$("#div").onchange.call($("#div"));
     DATA=null;show("done");
+    lastThanks={name:m.nama.split(" ")[0],total:j.total,months:mo};
+    if(wantMusic)speakThanks(lastThanks);
   }).catch(function(err){
     var known=err&&err.message&&["gagal","img","Failed to fetch"].indexOf(err.message)<0;
     $("#err").textContent=known?err.message:"Pengiriman gagal. Periksa koneksi, lalu kirim lagi.";
@@ -572,9 +577,12 @@ paintMute();tryPlay();
 
 /* fader volume di radio (pakai input range asli supaya jalan di layar sentuh) */
 var volIn=$("#volIn");
+var ducked=false,curVol=.6;
+function duck(on){ducked=on;setVol(curVol)}
 function setVol(v){
-  v=Math.max(0,Math.min(1,v));
-  if(gainNode){gainNode.gain.value=v;if(actx&&actx.state==="suspended")actx.resume()}else bgm.volume=v;
+  v=Math.max(0,Math.min(1,v));curVol=v;
+  var eff=v*(ducked?.25:1);
+  if(gainNode){gainNode.gain.value=eff;if(actx&&actx.state==="suspended")actx.resume()}else bgm.volume=eff;
   $("#fThumb").setAttribute("x",200+v*92-7);
   $("#fFill").setAttribute("width",v*92);
   volIn.value=Math.round(v*100);
@@ -582,6 +590,38 @@ function setVol(v){
 volIn.addEventListener("input",function(){setVol(volIn.value/100)});
 volIn.addEventListener("change",function(){setVol(volIn.value/100)});
 setVol(.6);
+
+/* suara ucapan terima kasih (Web Speech API bawaan browser) */
+var MONTHS_EN=["March","April","May","June","July","August","September","October","November","December"];
+var lastThanks=null;
+function enList(a){return a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1]}
+function pickVoice(prefix){
+  var vs=("speechSynthesis" in window)?speechSynthesis.getVoices():[];
+  for(var i=0;i<vs.length;i++){if(vs[i].lang.toLowerCase().replace("_","-").indexOf(prefix)===0)return vs[i]}
+  return null;
+}
+function speakThanks(t){
+  if(!("speechSynthesis" in window)||!t)return;
+  var ss=window.speechSynthesis;ss.cancel();
+  var idVoice=pickVoice("id");
+  var parts=[
+    {text:"Thank you,",id:false},
+    {text:t.name,id:true},
+    {text:"Your payment of "+t.total.toLocaleString("en-US")+" rupiah for "+(t.months.length===MONTHS_EN.length?"the whole period":enList(t.months.map(function(i){return MONTHS_EN[i]})))+" has been received, and is waiting for the treasurer to verify it.",id:false}
+  ];
+  parts.forEach(function(p,k){
+    var u=new SpeechSynthesisUtterance(p.text);
+    var useId=p.id&&idVoice,v=useId?idVoice:pickVoice("en");
+    if(v){u.voice=v;u.lang=v.lang}else u.lang="en-US";
+    u.rate=.98;
+    if(k===0)u.onstart=function(){duck(true)};
+    if(k===parts.length-1)u.onend=u.onerror=function(){duck(false)};
+    ss.speak(u);
+  });
+}
+if("speechSynthesis" in window){speechSynthesis.onvoiceschanged=function(){}}
+else{var sa=$("#speakAgain");if(sa)sa.hidden=true}
+$("#speakAgain").onclick=function(){speakThanks(lastThanks)};
 
 /* running text */
 (function(){
