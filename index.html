@@ -182,24 +182,37 @@ body{padding-top:30px}
 #moreAwards{color:#fff;border-color:rgba(255,255,255,.5)}
 </style>
 <style id="casaliora-cover-style">
-#cover{position:relative;overflow:hidden;background:#f3eeff;}
+@property --k1{syntax:'<color>';inherits:true;initial-value:#8b5cf6;}
+@property --k2{syntax:'<color>';inherits:true;initial-value:#c084fc;}
+@property --k3{syntax:'<color>';inherits:true;initial-value:#f472b6;}
+@property --k4{syntax:'<color>';inherits:true;initial-value:#ffffff;}
+@property --bgA{syntax:'<color>';inherits:true;initial-value:#ffffff;}
+@property --bgB{syntax:'<color>';inherits:true;initial-value:#efe6ff;}
+@property --cv-ink{syntax:'<color>';inherits:true;initial-value:#2b1458;}
+@property --cv-line{syntax:'<color>';inherits:true;initial-value:rgba(35,35,38,.25);}
+#cover{position:relative;overflow:hidden;background:#f3eeff;
+--k1:#8b5cf6;--k2:#c084fc;--k3:#f472b6;--k4:#ffffff;--bgA:#ffffff;--bgB:#efe6ff;--cv-ink:#2b1458;--cv-line:rgba(35,35,38,.25);
+color:var(--cv-ink);}
 #cover > *:not(.bgflow){position:relative;z-index:1;}
-.bgflow{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(160deg,#ffffff 0%,#e9e0ff 55%,#ffffff 100%);}
+#cover .cv-in h1 span{color:var(--cv-ink);}
+#cover .btn.ghost{color:var(--cv-ink);border-color:var(--cv-line);}
+.bgflow{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(160deg,var(--bgA) 0%,var(--bgB) 55%,var(--bgA) 100%);}
 .bgflow i{position:absolute;display:block;border-radius:50%;filter:blur(42px);will-change:transform;}
-.bgflow .b1{width:70vmax;height:52vmax;left:-22vmax;top:-14vmax;background:linear-gradient(135deg,#8b5cf6,#b9a2ff);}
-.bgflow .b2{width:58vmax;height:64vmax;right:-24vmax;top:2vmax;background:linear-gradient(200deg,#a78bfa,#d8ccff);}
-.bgflow .b3{width:60vmax;height:46vmax;left:-8vmax;top:30vmax;background:linear-gradient(120deg,#ffffff,#efe9ff);}
-.bgflow .b4{width:50vmax;height:56vmax;right:-10vmax;bottom:-18vmax;background:linear-gradient(160deg,#9b73fa,#cdbfff);}
-.bgflow .b5{width:46vmax;height:40vmax;left:-14vmax;bottom:-12vmax;background:linear-gradient(135deg,#b49cff,#ede7ff);}
-.bgflow .b6{width:42vmax;height:36vmax;right:8vmax;top:-10vmax;background:#ffffff;opacity:.9;}
-.bgflow::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.6) 1.1px,transparent 1.5px);background-size:10px 10px;opacity:.35;}
+.bgflow .b1{width:70vmax;height:52vmax;left:-22vmax;top:-14vmax;background:linear-gradient(135deg,var(--k1),var(--k2));}
+.bgflow .b2{width:58vmax;height:64vmax;right:-24vmax;top:2vmax;background:linear-gradient(200deg,var(--k2),var(--k3));}
+.bgflow .b3{width:60vmax;height:46vmax;left:-8vmax;top:30vmax;background:linear-gradient(120deg,var(--k4),var(--k3));}
+.bgflow .b4{width:50vmax;height:56vmax;right:-10vmax;bottom:-18vmax;background:linear-gradient(160deg,var(--k1),var(--k3));}
+.bgflow .b5{width:46vmax;height:40vmax;left:-14vmax;bottom:-12vmax;background:linear-gradient(135deg,var(--k2),var(--k4));}
+.bgflow .b6{width:42vmax;height:36vmax;right:8vmax;top:-10vmax;background:var(--k4);opacity:.9;}
+.bgflow::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.5) 1.1px,transparent 1.5px);background-size:10px 10px;opacity:.3;}
 @media (prefers-reduced-motion:no-preference){
-.bgflow .b1{animation:fl1 22s ease-in-out infinite alternate;}
-.bgflow .b2{animation:fl2 26s ease-in-out infinite alternate;}
-.bgflow .b3{animation:fl3 24s ease-in-out infinite alternate;}
-.bgflow .b4{animation:fl4 28s ease-in-out infinite alternate;}
-.bgflow .b5{animation:fl5 30s ease-in-out infinite alternate;}
-.bgflow .b6{animation:fl6 20s ease-in-out infinite alternate;}
+#cover{animation:palette 40s linear infinite;}
+.bgflow .b1{animation:fl1 9s ease-in-out infinite alternate;}
+.bgflow .b2{animation:fl2 11s ease-in-out infinite alternate;}
+.bgflow .b3{animation:fl3 10s ease-in-out infinite alternate;}
+.bgflow .b4{animation:fl4 12s ease-in-out infinite alternate;}
+.bgflow .b5{animation:fl5 13s ease-in-out infinite alternate;}
+.bgflow .b6{animation:fl6 8s ease-in-out infinite alternate;}
 }
 @keyframes fl1{to{transform:translate(30vmax,18vmax) rotate(35deg) scale(1.2);}}
 @keyframes fl2{to{transform:translate(-26vmax,22vmax) rotate(-30deg) scale(1.1);}}
@@ -207,7 +220,26 @@ body{padding-top:30px}
 @keyframes fl4{to{transform:translate(-30vmax,-20vmax) rotate(-35deg) scale(1.15);}}
 @keyframes fl5{to{transform:translate(26vmax,-18vmax) rotate(30deg) scale(1.2);}}
 @keyframes fl6{to{transform:translate(-24vmax,20vmax) rotate(-20deg) scale(1.3);}}
+/* urutan warna: ungu-pink, pink-ungu, hijau-hitam, kuning-hijau, biru-hitam */
+@keyframes palette{
+0%,12%{--k1:#8b5cf6;--k2:#c084fc;--k3:#f472b6;--k4:#ffffff;--bgA:#ffffff;--bgB:#efe6ff;--cv-ink:#2b1458;--cv-line:rgba(35,35,38,.25);}
+20%,32%{--k1:#f472b6;--k2:#f9a8d4;--k3:#a78bfa;--k4:#ffffff;--bgA:#fff5fa;--bgB:#ffe0f0;--cv-ink:#3b0f3a;--cv-line:rgba(35,35,38,.25);}
+35.6%{--cv-ink:#3b0f3a;--cv-line:rgba(35,35,38,.25);}
+36.4%{--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+40%,52%{--k1:#0b3d2e;--k2:#0e7a56;--k3:#145c43;--k4:#050807;--bgA:#06100c;--bgB:#0e2a20;--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+55.6%{--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+56.4%{--cv-ink:#1f2a10;--cv-line:rgba(35,35,38,.25);}
+60%,72%{--k1:#facc15;--k2:#a3e635;--k3:#4ade80;--k4:#fffde0;--bgA:#fffbe0;--bgB:#eaffcf;--cv-ink:#1f2a10;--cv-line:rgba(35,35,38,.25);}
+75.6%{--cv-ink:#1f2a10;--cv-line:rgba(35,35,38,.25);}
+76.4%{--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+80%,92%{--k1:#1d4ed8;--k2:#2563eb;--k3:#0b1d4d;--k4:#04060d;--bgA:#050816;--bgB:#0b1a40;--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+95.6%{--cv-ink:#ffffff;--cv-line:rgba(255,255,255,.4);}
+96.4%{--cv-ink:#2b1458;--cv-line:rgba(35,35,38,.25);}
+100%{--k1:#8b5cf6;--k2:#c084fc;--k3:#f472b6;--k4:#ffffff;--bgA:#ffffff;--bgB:#efe6ff;--cv-ink:#2b1458;--cv-line:rgba(35,35,38,.25);}
+}
 </style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".55" stop-color="#fcc72f"/><stop offset="1" stop-color="#e09a12"/></linearGradient></defs></svg>
@@ -410,7 +442,7 @@ function divisionOf(jab){
 /* data */
 function load(){
   if(DATA) return;
-  if(API_URL.indexOf("https://script.google.com/macros/s/AKfycbz5Zm1OhIAs1kjBahwXReeauIxTrs1DUNXQ3-f7ispxo02R-F3HyY5jH_b5eeN-01Yk/exec")===0)
+  if(API_URL.indexOf("PASTE_")===0){fail("Website belum tersambung ke spreadsheet. Isi API_URL dulu.");return}
   $("#loadState").hidden=false;$("#loadState").textContent="Memuat daftar anggota…";
   $("#f").hidden=true;
   $("#list").replaceChildren(el("div","state","Memuat rekapitulasi…"));
