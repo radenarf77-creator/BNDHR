@@ -231,6 +231,25 @@ color:var(--cv-ink);}
 </style>
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
+<style id="admin-style">
+input[type=password]{width:100%;padding:13px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface)}
+#adLogin{margin-top:6px}
+.stats.three{grid-template-columns:repeat(3,1fr)}
+.stats.three div:nth-child(3){background:#f9a8d4}
+.seg{display:flex;gap:6px}
+.seg button{border:2px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--purple);border-color:var(--purple);color:#fff}
+.ad-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ad-tools .mini{padding:6px 4px}
+.ad-meta{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+.ad-meta b{display:inline;color:var(--ink)}
+.ad-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ad-actions .btn{width:auto;flex:1 1 120px;padding:11px 12px;font-size:14px;box-shadow:none;margin:0;border-radius:10px}
+.badge.wait{background:var(--sun);color:var(--navy)}
+.proof-img{display:block;width:100%;max-width:420px;margin:10px auto 0;border-radius:12px;border:2px solid var(--line)}
+.adlink{text-align:center;margin:16px 0 0}
+.adlink .mini{color:var(--muted);font-weight:500;font-size:13px}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".55" stop-color="#fcc72f"/><stop offset="1" stop-color="#e09a12"/></linearGradient></defs></svg>
@@ -375,6 +394,30 @@ color:var(--cv-ink);}
   <div id="list"><div class="state">Memuat rekapitulasi…</div></div>
 </section>
 
+<section id="admin" class="view">
+  <img class="logo" alt="CRAST 107.8 FM">
+  <div class="topbar"><button class="back" data-go="cover">‹ Kembali</button><div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="banner"><h2>Panel bendahara</h2><p>Verifikasi pembayaran di sini. Rekap di spreadsheet ikut berubah otomatis.</p></div>
+  <form id="adLogin" novalidate>
+    <label class="lbl" for="adPin">PIN bendahara</label>
+    <input type="password" id="adPin" autocomplete="current-password" placeholder="Masukkan PIN">
+    <p class="err" id="adErr" role="alert"></p>
+    <button class="btn" type="submit" id="adGo">Masuk</button>
+  </form>
+  <div id="adPanel" hidden>
+    <div class="stats three" id="adStats"></div>
+    <div class="ad-tools">
+      <div class="seg" id="adTabs">
+        <button type="button" data-tab="wait" aria-pressed="true">Menunggu</button>
+        <button type="button" data-tab="all" aria-pressed="false">Semua</button>
+      </div>
+      <div><button type="button" class="mini" id="adRefresh">Muat ulang</button> <button type="button" class="mini" id="adOut">Keluar</button></div>
+    </div>
+    <p class="hint" id="adMsg" aria-live="polite"></p>
+    <div id="adList"></div>
+  </div>
+</section>
+
 <div class="hall-wrap">
   <div class="hall">
     <h3>Hall of Fame</h3>
@@ -382,6 +425,7 @@ color:var(--cv-ink);}
     <div id="awards"><div class="state">Memuat daftar…</div></div>
     <button class="btn ghost" id="moreAwards" hidden>Lihat semua</button>
   </div>
+  <p class="adlink"><button type="button" class="mini" id="adLink">Panel bendahara</button></p>
 </div>
 
 <script>
@@ -595,6 +639,111 @@ function renderAwards(){
   btn.textContent=showAll?"Tampilkan lebih sedikit":"Lihat semua ("+list.length+")";
 }
 $("#moreAwards").onclick=function(){showAll=!showAll;renderAwards()};
+
+/* panel bendahara */
+var adminPin="";
+try{adminPin=sessionStorage.getItem("adminPin")||""}catch(e){}
+var adRows=[],adTab="wait";
+function adPost(body){
+  body.pin=adminPin;
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}).then(function(r){return r.json()});
+}
+function adShow(on){$("#adLogin").hidden=on;$("#adPanel").hidden=!on}
+function adForget(){adminPin="";try{sessionStorage.removeItem("adminPin")}catch(e){}adShow(false)}
+function adLoad(){
+  if(API_URL.indexOf("PASTE_")===0){$("#adErr").textContent="Website belum tersambung ke spreadsheet.";return Promise.resolve()}
+  $("#adMsg").textContent="";
+  if(!$("#adPanel").hidden)$("#adList").replaceChildren(el("div","state","Memuat pembayaran…"));
+  return adPost({action:"admin_list"}).then(function(j){
+    if(!j.ok){
+      if(/PIN|diaktifkan|banyak/.test(j.error||""))adForget();
+      $("#adErr").textContent=j.error||"Gagal memuat data.";return;
+    }
+    try{sessionStorage.setItem("adminPin",adminPin)}catch(e){}
+    $("#adErr").textContent="";adRows=j.rows;adShow(true);adRender();
+  }).catch(function(){
+    var m="Gagal terhubung. Periksa koneksi, lalu coba lagi.";
+    if($("#adPanel").hidden)$("#adErr").textContent=m;else $("#adList").replaceChildren(el("div","state",m));
+  });
+}
+function adRender(){
+  var cnt={wait:0,ok:0,no:0};
+  adRows.forEach(function(r){if(r.status==="Terverifikasi")cnt.ok++;else if(r.status==="Ditolak")cnt.no++;else cnt.wait++});
+  var st=$("#adStats");st.replaceChildren();
+  [["Menunggu",cnt.wait],["Terverifikasi",cnt.ok],["Ditolak",cnt.no]].forEach(function(p){
+    var b=el("div");b.appendChild(el("small",null,p[0]));b.appendChild(el("strong",null,p[1]));st.appendChild(b)});
+  document.querySelectorAll("#adTabs button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.tab===adTab?"true":"false")});
+  var rows=adRows.filter(function(r){return adTab==="all"||(r.status!=="Terverifikasi"&&r.status!=="Ditolak")});
+  var l=$("#adList");l.replaceChildren();
+  if(!rows.length){l.appendChild(el("div","state",adTab==="wait"?"Tidak ada pembayaran yang menunggu. Mantap!":"Belum ada pembayaran."));return}
+  rows.forEach(function(r){l.appendChild(adCard(r))});
+}
+function adCard(r){
+  var card=el("div","row"),head=el("div","head"),w=el("div");
+  w.appendChild(el("b",null,r.nama));w.appendChild(el("small",null,r.divisi));head.appendChild(w);
+  var cls=r.status==="Terverifikasi"?"ok":r.status==="Ditolak"?"no":"wait";
+  head.appendChild(el("span","badge "+cls,r.status==="Menunggu verifikasi"?"Menunggu":r.status));card.appendChild(head);
+  var meta=el("p","ad-meta");
+  [["Bulan",r.bulan],["Total",rp(r.total)],["Via",r.via],["Masuk",r.waktu]].forEach(function(p,i){
+    if(i)meta.appendChild(document.createElement("br"));
+    meta.appendChild(document.createTextNode(p[0]+": "));meta.appendChild(el("b",null,p[1]));
+  });
+  card.appendChild(meta);
+  var box=el("div"),act=el("div","ad-actions");
+  var bp=el("button","btn ghost","Lihat bukti");bp.type="button";bp.onclick=function(){adProof(r,box,bp)};act.appendChild(bp);
+  var mk=function(label,cls,status,ask){
+    var b=el("button","btn "+cls,label);b.type="button";
+    b.onclick=function(){
+      if(ask&&!confirm(ask.replace("{n}",r.nama)))return;
+      adSet(r,status,act);
+    };
+    act.appendChild(b);
+  };
+  if(r.status==="Terverifikasi"){
+    mk("Batalkan verifikasi","ghost","Menunggu verifikasi","Batalkan verifikasi {n}? Centang bulannya di Sheet1 akan dilepas.");
+  }else{
+    mk("Verifikasi","teal","Terverifikasi","Verifikasi pembayaran {n} ("+r.bulan+", "+rp(r.total)+")? Bulannya akan dicentang di Sheet1.");
+    if(r.status==="Ditolak")mk("Kembalikan","ghost","Menunggu verifikasi",null);
+    else mk("Tolak","ghost","Ditolak","Tolak pembayaran {n}?");
+  }
+  card.appendChild(act);card.appendChild(box);
+  return card;
+}
+function adProof(r,box,btn){
+  if(box.firstChild){box.replaceChildren();btn.textContent="Lihat bukti";return}
+  btn.disabled=true;btn.textContent="Memuat…";
+  adPost({action:"admin_photo",row:r.row}).then(function(j){
+    if(!j.ok)throw new Error(j.error||"gagal");
+    var img=new Image();img.src=j.data;img.alt="Bukti pembayaran "+r.nama;img.className="proof-img";
+    box.replaceChildren(img);btn.textContent="Tutup bukti";
+  }).catch(function(){
+    box.replaceChildren(el("div","state","Bukti tidak bisa dimuat."));btn.textContent="Lihat bukti";
+  }).then(function(){btn.disabled=false});
+}
+function adSet(r,status,act){
+  var bs=act.querySelectorAll("button");bs.forEach(function(b){b.disabled=true});
+  $("#adMsg").textContent="Menyimpan…";
+  adPost({action:"admin_set",row:r.row,status:status}).then(function(j){
+    if(!j.ok){$("#adMsg").textContent=j.error||"Gagal menyimpan.";bs.forEach(function(b){b.disabled=false});return}
+    r.status=j.status;DATA=null;
+    $("#adMsg").textContent=r.nama+": "+(status==="Terverifikasi"?"terverifikasi, rekap diperbarui.":status==="Ditolak"?"ditolak.":"dikembalikan ke menunggu, rekap diperbarui.");
+    adRender();
+  }).catch(function(){$("#adMsg").textContent="Gagal terhubung. Coba lagi.";bs.forEach(function(b){b.disabled=false})});
+}
+$("#adLogin").onsubmit=function(e){
+  e.preventDefault();
+  var pin=$("#adPin").value.trim();
+  if(!pin){$("#adErr").textContent="Masukkan PIN dulu.";return}
+  adminPin=pin;$("#adErr").textContent="";
+  var b=$("#adGo");b.disabled=true;b.textContent="Memeriksa…";
+  adLoad().then(function(){b.disabled=false;b.textContent="Masuk";if(!$("#adPanel").hidden)$("#adPin").value=""});
+};
+$("#adTabs").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;adTab=b.dataset.tab;adRender()});
+$("#adRefresh").onclick=function(){adLoad()};
+$("#adOut").onclick=function(){adForget();$("#adMsg").textContent="";$("#adErr").textContent=""};
+function openAdmin(){show("admin");if(adminPin)adLoad()}
+$("#adLink").onclick=openAdmin;
+if(location.hash==="#bendahara")openAdmin();
 
 /* rekap */
 function renderRekap(){
